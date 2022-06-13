@@ -4,6 +4,9 @@ import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import Moment from 'moment';
 import {Button, View, Text, FlatList, StyleSheet, Switch} from 'react-native';
 import {AlarmScreen} from './components';
+import {openDatabase} from 'react-native-sqlite-storage';
+
+var db = openDatabase({name: 'alarms.db', createFromLocation: '~alarms.db'});
 
 const Stack = createNativeStackNavigator();
 
@@ -21,17 +24,52 @@ function App() {
 class HomeScreen extends React.Component {
   state = {
     data: [
-      {id: 0, time: Date(), description: 'wake up', isEnabled: false},
-      {id: 1, time: Date(), description: '', isEnabled: true},
-      {id: 2, time: Date(), description: 'go to bed', isEnabled: false},
+      {id: 0, time: Date(2020), description: 'wake up', isEnabled: false},
+      {id: 1, time: Date(2020), description: '', isEnabled: true},
+      {id: 2, time: Date(2020), description: 'go to bed', isEnabled: false},
     ],
   };
 
   constructor(props) {
     super(props);
-    console.log('constructor');
   }
 
+  insertItem = (time, description, radio) => {
+    return new Promise(() => {
+      db.transaction(tx => {
+        tx.executeSql(
+          'INSERT INTO alarms (time, description, isEnabled, radio) VALUES (?, ?, ?, ?)',
+          [time, description, 1, radio],
+          (tx, results) => {
+            console.log('insertion: ' + results.insertId);
+          },
+        );
+      });
+    });
+  };
+
+  selectItems() {
+    return new Promise(() => {
+      db.transaction(tx => {
+        tx.executeSql('SELECT * FROM alarms', [], (tx, results) => {
+          var len = results.rows.length;
+          this.state.data = [];
+          for (let i = 0; i < len; i++) {
+            let item = results.rows.item(i);
+            this.state.data.push({
+              id: item.id,
+              time: item.time,
+              description: item.description,
+              isActive: item.isActive,
+              radio: item.radio,
+            });
+          }
+          this.state.isChanged = false;
+          this.setState(this.state);
+        });
+      });
+    });
+  }
   componentDidMount = async () => {
     console.log('componentDidMount');
   };
