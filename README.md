@@ -6,4 +6,4 @@
 
 `npm start -- --reset-cache / npm start / react-native start`
 
-`react-native run-android`
+`npx react-native run-android`
