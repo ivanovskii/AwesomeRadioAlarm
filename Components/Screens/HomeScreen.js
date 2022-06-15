@@ -1,6 +1,14 @@
 import Moment from 'moment';
 import * as React from 'react';
-import {Button, View, Text, FlatList, StyleSheet, Switch} from 'react-native';
+import {
+  Button,
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  Switch,
+  TouchableOpacity,
+} from 'react-native';
 import {openDatabase} from 'react-native-sqlite-storage';
 import {Database} from '../DatabaseService';
 
@@ -11,45 +19,67 @@ class HomeScreen extends React.Component {
     data: [],
   };
 
-  constructor(props) {
-    super(props);
+  async componentDidMount() {
+    this.setState({data: await db.all()});
   }
 
-  componentDidMount = async () => {
-    console.log('componentDidMount');
-    await db.recreate();
-    await db.insert('test', 'test', 'test');
+  async componentDidUpdate() {
+    if (this.props.route.params) {
+      if (this.props.route.params.op == 'edit') {
+        this.props.route.params.op = null;
+        let item = this.props.route.params.item;
+        await db.update(
+          item.id,
+          item.time,
+          item.description,
+          item.radio,
+          item.isEnabled,
+        );
+      }
+      if (this.props.route.params.op == 'create') {
+        this.props.route.params.op = null;
+        let item = this.props.route.params.item;
+        if (item.time != null)
+          await db.insert(
+            item.time,
+            item.description,
+            item.radio,
+            item.isEnabled,
+          );
+      }
+      if (this.props.route.params.op == 'delete') {
+        this.props.route.params.op = null;
+        await db.delete(this.props.route.params.item.id);
+      }
+    }
     this.setState({data: await db.all()});
-  };
-
-  componentDidUpdate = async () => {
-    console.log('componentDidUpdate');
-  };
-
-  componentWillUnmount = async () => {
-    console.log('componentWillUnmount');
-  };
+  }
 
   renderItem = ({item}) => {
     return (
-      <View style={styles.listItem}>
-        <View>
-          <Text style={styles.clockText}>
-            {Moment(item.time).format('HH:mm')}
-          </Text>
-          {item.description == '' ? (
-            <Text style={styles.subtitle}>No description</Text>
-          ) : (
-            <Text style={styles.subtitle}>{item.description}</Text>
-          )}
+      <TouchableOpacity
+        onPress={() => {
+          this.props.navigation.navigate('Alarm', {op: 'edit', item: item});
+        }}>
+        <View style={styles.listItem}>
+          <View>
+            <Text style={styles.clockText}>
+              {Moment(Date.parse(item.time)).format('HH:mm')}
+            </Text>
+            {item.description == '' ? (
+              <Text style={styles.subtitle}>No description</Text>
+            ) : (
+              <Text style={styles.subtitle}>{item.description}</Text>
+            )}
+          </View>
+          <Switch
+            trackColor={{true: '#c0d8ff', false: '#d1d1d1'}}
+            thumbColor={item.isEnabled ? '#6495ED' : '#f4f3f4'}
+            onValueChange={() => {}}
+            value={item.isEnabled == 1}
+          />
         </View>
-        <Switch
-          trackColor={{true: '#c0d8ff', false: '#d1d1d1'}}
-          thumbColor={item.isEnabled ? '#6495ED' : '#f4f3f4'}
-          onValueChange={() => {}}
-          value={item.isEnabled == 1}
-        />
-      </View>
+      </TouchableOpacity>
     );
   };
 
@@ -59,7 +89,9 @@ class HomeScreen extends React.Component {
         <FlatList data={this.state.data} renderItem={this.renderItem} />
         <Button
           title="New alarm"
-          onPress={() => this.props.navigation.navigate('Alarm')}
+          onPress={() =>
+            this.props.navigation.navigate('Alarm', {op: 'create'})
+          }
         />
       </View>
     );
