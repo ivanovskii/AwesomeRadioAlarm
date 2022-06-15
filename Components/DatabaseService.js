@@ -2,6 +2,7 @@
 // https://infinitbility.com/react-native-sqlite-storage-examples-of-query
 
 // TODO: more abstract SQL queries
+// TODO: models support
 
 import {openDatabase} from 'react-native-sqlite-storage';
 
