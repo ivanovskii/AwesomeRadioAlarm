@@ -1,5 +1,6 @@
 import * as React from 'react';
 import {Button, View, Text, TextInput, StyleSheet} from 'react-native';
+import {Picker} from '@react-native-picker/picker';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import Moment from 'moment';
 
@@ -9,7 +10,7 @@ class AlarmScreen extends React.Component {
     time: null,
     description: '',
     isEnabled: 1,
-    radio: '',
+    radio: '0',
     showPicker: false,
   };
 
@@ -27,10 +28,15 @@ class AlarmScreen extends React.Component {
     this.setState(this.state);
   };
 
+  setSelectedValue = itemValue => {
+    this.state.radio = itemValue;
+    this.setState(this.state);
+  };
+
   render() {
     return (
       <View style={styles.mainView}>
-        <View style={{marginHorizontal: 50}}>
+        <View style={{padding: 30, justifyContent: 'space-between'}}>
           {this.state.time == null ? (
             <Text style={styles.time}>No time</Text>
           ) : (
@@ -49,9 +55,19 @@ class AlarmScreen extends React.Component {
             title="Choose time"
             color="#2196f3"
             onPress={() => {
-              (this.state.showPicker = true), this.setState(this.state);
+              this.state.showPicker = true;
+              this.setState(this.state);
             }}
           />
+          <View style={styles.picker}>
+            <Picker
+              selectedValue={this.state.radio}
+              onValueChange={itemValue => this.setSelectedValue(itemValue)}>
+              <Picker.Item label="JazzRadio High" value="0" />
+              <Picker.Item label="ClassRock" value="1" />
+              <Picker.Item label="Death Metal Radio" value="2" />
+            </Picker>
+          </View>
           <TextInput
             style={styles.textField}
             onChangeText={text => {
@@ -95,11 +111,20 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     justifyContent: 'space-between',
+    backgroundColor: 'white',
+  },
+  picker: {
+    marginTop: 30,
+    backgroundColor: '#f3f6f4',
+    borderRadius: 6,
   },
   textField: {
-    marginVertical: 30,
+    marginTop: 30,
+    backgroundColor: '#f3f6f4',
+    borderTopLeftRadius: 6,
+    borderTopRightRadius: 6,
     borderBottomColor: '#2196f3',
-    borderBottomWidth: 1,
+    borderBottomWidth: 0.4,
   },
   time: {
     alignSelf: 'center',

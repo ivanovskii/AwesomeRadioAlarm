@@ -25,33 +25,27 @@ class HomeScreen extends React.Component {
 
   async componentDidUpdate() {
     if (this.props.route.params) {
-      if (this.props.route.params.op == 'edit') {
+      let item = this.props.route.params.item;
+      let op = this.props.route.params.op;
+
+      if (op == 'create') {
         this.props.route.params.op = null;
-        let item = this.props.route.params.item;
-        await db.update(
-          item.id,
-          item.time,
-          item.description,
-          item.radio,
-          item.isEnabled,
-        );
+        if (item != null) await db.insert(item);
       }
-      if (this.props.route.params.op == 'create') {
+      if (op == 'edit') {
         this.props.route.params.op = null;
-        let item = this.props.route.params.item;
-        if (item.time != null)
-          await db.insert(
-            item.time,
-            item.description,
-            item.radio,
-            item.isEnabled,
-          );
+        await db.update(item);
       }
-      if (this.props.route.params.op == 'delete') {
+      if (op == 'delete') {
         this.props.route.params.op = null;
-        await db.delete(this.props.route.params.item.id);
+        await db.delete(item.id);
       }
+      this.setState({data: await db.all()});
     }
+  }
+
+  async onChangeSwitch(state) {
+    await db.update(state.item);
     this.setState({data: await db.all()});
   }
 
@@ -75,8 +69,11 @@ class HomeScreen extends React.Component {
           <Switch
             trackColor={{true: '#c0d8ff', false: '#d1d1d1'}}
             thumbColor={item.isEnabled ? '#6495ED' : '#f4f3f4'}
-            onValueChange={() => {}}
-            value={item.isEnabled == 1}
+            onValueChange={value => {
+              item.isEnabled = Number(value);
+              this.onChangeSwitch({item: item});
+            }}
+            value={Boolean(item.isEnabled)}
           />
         </View>
       </TouchableOpacity>

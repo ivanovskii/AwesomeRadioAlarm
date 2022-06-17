@@ -47,22 +47,22 @@ class Database {
     );
   }
 
-  async insert(time, description, radio, isEnabled = 1) {
+  async insert(item) {
     await this.ExecuteQuery(
       `INSERT INTO ${
         this.#tableName
       } (time, description, isEnabled, radio) VALUES (?, ?, ?, ?)`,
-      [time, description, isEnabled, radio],
+      [item.time, item.description, item.isEnabled, item.radio],
     );
     console.log('Inserted successfully');
   }
 
-  async update(id, time, description, radio, isEnabled = 1) {
+  async update(item) {
     await this.ExecuteQuery(
       `UPDATE ${
         this.#tableName
       } SET time = ? , description = ? , isEnabled = ? , radio = ? WHERE id = ?`,
-      [time, description, isEnabled, radio, id],
+      [item.time, item.description, item.isEnabled, item.radio, item.id],
     );
     console.log('Updated successfully');
   }
