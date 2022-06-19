@@ -1,4 +1,3 @@
-import Moment from 'moment';
 import * as React from 'react';
 import {
   Button,
@@ -9,8 +8,24 @@ import {
   Switch,
   TouchableOpacity,
 } from 'react-native';
-import {openDatabase} from 'react-native-sqlite-storage';
+
+import notifee from '@notifee/react-native';
+import {
+  setAlarm,
+  stopAlarm,
+  onCreateTriggerNotification,
+} from '../Notifications.js';
+
 import {Database} from '../DatabaseService';
+import Moment from 'moment';
+
+notifee.onForegroundEvent(async ({type, detail}) => {
+  setAlarm(type, detail);
+});
+
+notifee.onBackgroundEvent(async ({type, detail}) => {
+  setAlarm(type, detail);
+});
 
 var db = new Database('alarms', '~alarms.db', 'alarms');
 
@@ -26,26 +41,53 @@ class HomeScreen extends React.Component {
   async componentDidUpdate() {
     if (this.props.route.params) {
       let item = this.props.route.params.item;
-      let op = this.props.route.params.op;
-
-      if (op == 'create') {
-        this.props.route.params.op = null;
-        if (item != null) await db.insert(item);
-      }
-      if (op == 'edit') {
-        this.props.route.params.op = null;
-        await db.update(item);
-      }
-      if (op == 'delete') {
-        this.props.route.params.op = null;
-        await db.delete(item.id);
+      switch (this.props.route.params.op) {
+        case 'create':
+          this.createAlarm(item);
+          break;
+        case 'edit':
+          this.editAlarm(item);
+          break;
+        case 'delete':
+          this.deleteAlarm(item);
+          break;
       }
       this.setState({data: await db.all()});
     }
   }
 
-  async onChangeSwitch(state) {
-    await db.update(state.item);
+  async createAlarm(item) {
+    this.props.route.params.op = null;
+    if (item.time != null) {
+      await db.insert(item);
+      onCreateTriggerNotification(item.id, item.time, item.radio);
+    }
+  }
+
+  async editAlarm(item) {
+    this.props.route.params.op = null;
+    await db.update(item);
+    stopAlarm();
+    notifee.cancelTriggerNotification(String(item.id));
+    onCreateTriggerNotification(item.id, item.time, item.radio);
+  }
+
+  async deleteAlarm(item) {
+    this.props.route.params.op = null;
+    await db.delete(item.id);
+    stopAlarm();
+    notifee.cancelNotification(String(item.id));
+  }
+
+  async onChangeSwitch(value, item) {
+    if (value) {
+      onCreateTriggerNotification(item.id, item.time, item.radio);
+    } else {
+      stopAlarm();
+      notifee.cancelNotification(String(item.id));
+    }
+    item.isEnabled = Number(value);
+    await db.update(item);
     this.setState({data: await db.all()});
   }
 
@@ -70,8 +112,7 @@ class HomeScreen extends React.Component {
             trackColor={{true: '#c0d8ff', false: '#d1d1d1'}}
             thumbColor={item.isEnabled ? '#6495ED' : '#f4f3f4'}
             onValueChange={value => {
-              item.isEnabled = Number(value);
-              this.onChangeSwitch({item: item});
+              this.onChangeSwitch(value, item);
             }}
             value={Boolean(item.isEnabled)}
           />

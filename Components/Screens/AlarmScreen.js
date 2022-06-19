@@ -3,6 +3,9 @@ import {Button, View, Text, TextInput, StyleSheet} from 'react-native';
 import {Picker} from '@react-native-picker/picker';
 import RNDateTimePicker from '@react-native-community/datetimepicker';
 import Moment from 'moment';
+import notifee from '@notifee/react-native';
+import {stopAlarm} from '../Notifications.js';
+import {radio_src} from '../RadioSource.js';
 
 class AlarmScreen extends React.Component {
   state = {
@@ -22,13 +25,14 @@ class AlarmScreen extends React.Component {
     }
   }
 
-  setDate = (event, date) => {
+  datetimePickerSetDate = (event, date) => {
+    date.setSeconds(0);
     this.state.showPicker = false;
     this.state.time = date.toString();
     this.setState(this.state);
   };
 
-  setSelectedValue = itemValue => {
+  pickerSetSelectedValue = itemValue => {
     this.state.radio = itemValue;
     this.setState(this.state);
   };
@@ -48,7 +52,7 @@ class AlarmScreen extends React.Component {
             <RNDateTimePicker
               mode="time"
               value={new Date()}
-              onChange={this.setDate}
+              onChange={this.datetimePickerSetDate}
             />
           )}
           <Button
@@ -62,10 +66,16 @@ class AlarmScreen extends React.Component {
           <View style={styles.picker}>
             <Picker
               selectedValue={this.state.radio}
-              onValueChange={itemValue => this.setSelectedValue(itemValue)}>
-              <Picker.Item label="JazzRadio High" value="0" />
-              <Picker.Item label="ClassRock" value="1" />
-              <Picker.Item label="Death Metal Radio" value="2" />
+              onValueChange={this.pickerSetSelectedValue}>
+              {Object.keys(radio_src).map(key => {
+                return (
+                  <Picker.Item
+                    label={radio_src[key].name}
+                    value={key}
+                    key={key}
+                  />
+                );
+              })}
             </Picker>
           </View>
           <TextInput
